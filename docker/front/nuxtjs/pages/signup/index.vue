@@ -15,7 +15,7 @@
           <el-upload
             v-loading="upLoading"
             class="avatar-uploader"
-            action="http://8.130.114.187:2233/user/upload/avatar"
+            action="http://localhost:2233/user/upload/avatar"
             :show-file-list="false"
             :on-success="handleAvatarSuccess"
             :before-upload="beforeAvatarUpload">
@@ -24,7 +24,7 @@
           </el-upload>
         </el-form-item>
         <el-form-item>
-          <el-button type="success" plain @click="submitForm">提交注册</el-button>
+          <el-button type="success" plain :disabled="!userInfo.avatar" @click="submitForm">提交注册</el-button>
           <el-button @click="resetForm">重置</el-button>
         </el-form-item>
       </el-form>
@@ -68,8 +68,10 @@ export default {
       const isRightType = /\.(jpg|jpeg|png|GIF|JPG|PNG)$/.test(file.name)
       if (!isRightType) {
         this.$message.warning({type: 'warning', message: '上传头像只能是JPG或PNG格式！'})
+        this.upLoading=false;
+      }else {
+        this.upLoading=true;
       }
-      this.upLoading=true;
       return isRightType;
     },
     handleAvatarSuccess(res, file) {

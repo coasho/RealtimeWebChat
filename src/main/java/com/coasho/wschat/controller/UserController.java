@@ -63,7 +63,7 @@ public class UserController {
         String id = JwtUtils.getMemberIdByJwtToken(request);
         User user = userService.getOne(new QueryWrapper<User>().eq("id", id));
         if (user == null) {
-            throw new LoginException(25001, "登录失效");
+            throw new LoginException(25001, "请重新登录");
         }
         UserVo userVo = new UserVo();
         BeanUtils.copyProperties(user, userVo);
