@@ -1,0 +1,31 @@
+version: '2.4'
+services:
+
+  chat-front:
+    container_name: chat-front
+    image: node:16.14.1
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    ports:
+      - "2333:3000"
+    networks:
+      - uni_net1
+  chat-back:
+    container_name: chat-back
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    ports:
+      - "2233:2233"
+    networks:
+      - uni_net1
+networks:
+  uni_net1:
+    driver: bridge
+    name: uni_net1
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.128.201.0/24
+          gateway: 192.128.201.1
