@@ -2,7 +2,7 @@ import axios from "axios";
 import cookie from "js-cookie";
 import {Message} from "element-ui"
 const service = axios.create({
-  baseURL: "http://8.130.114.187:2233",
+  baseURL: "http://localhost:2233",
   timeout: 20000
 })
 service.interceptors.request.use(config => {

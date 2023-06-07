@@ -2,7 +2,7 @@
 
 export default {
   create(id) {
-    let websocket = new WebSocket('ws://8.130.114.187:2233/chat/' + id);
+    let websocket = new WebSocket('ws://127.0.0.1:2233/chat/' + id);
     return websocket
   }
 

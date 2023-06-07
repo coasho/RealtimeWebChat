@@ -39,7 +39,7 @@ public class CodeGenerator {
         dsc.setUrl("jdbc:mysql://8.130.114.187:3306/ws_chat?serverTimezone=GMT%2B8");
         dsc.setDriverName("com.mysql.cj.jdbc.Driver");
         dsc.setUsername("root");
-        dsc.setPassword("hhbcflq");
+        dsc.setPassword("???????");
         dsc.setDbType(DbType.MYSQL);
         mpg.setDataSource(dsc);
         // 4、包配置

@@ -1,6 +1,6 @@
 package com.coasho.wschat.controller;
 
-import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -19,6 +19,7 @@ import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -133,7 +134,11 @@ public class ChatServer {
         map.put("content", content);
         map.put("isSystem", isSystem);
         map.put("isOpen", isOpen);
-        map.put("date", DateUtil.now());
+        TimeZone cnTimeZone = TimeZone.getTimeZone("Asia/Shanghai");
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DatePattern.CHINESE_DATE_TIME_PATTERN);
+        simpleDateFormat.setTimeZone(cnTimeZone);
+        String date = simpleDateFormat.format(new Date());
+        map.put("date", date);
         map.put("isDatePoint", isDatePoint);
         if (isSystem) {
             map.put("onlineCount", getOnlineCount());
@@ -141,7 +146,11 @@ public class ChatServer {
             map.put("onlineUserItems", onlineUsers);
         } else {
             UserVo userVo = new UserVo();
-            BeanUtils.copyProperties(userService.getById(userId), userVo);
+            if (isOpen) {
+                BeanUtils.copyProperties(userService.getById(userId), userVo);
+            } else {
+                BeanUtils.copyProperties(userService.getById(fromUserId), userVo);
+            }
             map.put("userInfo", userVo);
         }
         String systemMessage = JSONObject.toJSONString(map);
@@ -164,7 +173,7 @@ public class ChatServer {
                 redisTemplate.opsForList().rightPush(chatListId.toString(), systemMessage);
             } else if (isOpen && userId == fromUserId) {
                 Long size = redisTemplate.opsForList().size("openChatList");
-                if (size > 100) {
+                if (size > 300) {
                     redisTemplate.opsForList().leftPop("openChatList");
                 }
                 redisTemplate.opsForList().rightPush("openChatList", systemMessage);

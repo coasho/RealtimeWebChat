@@ -109,7 +109,7 @@ export default {
   }
 }
 
-.app {
+. app {
   text-align: center;
   padding-top: 6%;
 }

@@ -3,18 +3,21 @@
     "name": "chat",
     "path": "/chat",
     "component": "D:\\\\Java\\\\projects\\\\back-end\\\\production\\\\ws-chat\\\\front\\\\chat\\\\pages\\\\chat\\\\index.vue",
-    "chunkName": "pages/chat/index"
+    "chunkName": "pages/chat/index",
+    "_name": "_c6969148"
   },
   {
     "name": "signup",
     "path": "/signup",
     "component": "D:\\\\Java\\\\projects\\\\back-end\\\\production\\\\ws-chat\\\\front\\\\chat\\\\pages\\\\signup\\\\index.vue",
-    "chunkName": "pages/signup/index"
+    "chunkName": "pages/signup/index",
+    "_name": "_22f391c8"
   },
   {
     "name": "index",
     "path": "/",
     "component": "D:\\\\Java\\\\projects\\\\back-end\\\\production\\\\ws-chat\\\\front\\\\chat\\\\pages\\\\index.vue",
-    "chunkName": "pages/index"
+    "chunkName": "pages/index",
+    "_name": "_d9bc6698"
   }
 ]

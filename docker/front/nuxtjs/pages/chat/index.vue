@@ -45,7 +45,7 @@
           <el-button :disabled="sendMessage.content==null" @click="sendMsg">发送</el-button>
         </el-form-item>
       </el-form>
-      <div class="back-png" ><img src="../../static/background.png"></div>
+      <div class="back-png"><img src="../../static/background.png"></div>
     </div>
   </div>
 </template>
@@ -65,7 +65,7 @@ export default {
         token: '',
         toUserId: null,
         content: null,
-        isDatePoint:false
+        isDatePoint: false
       },
       onlineUserItems: [],
       chatList: [
@@ -103,11 +103,10 @@ export default {
   methods: {
     sendMsg() {
       this.sendMessage.token = cookie.get('token')
-      if ((Date.parse(new Date()) - this.preGetDate) > 1000 * 60 * 3) {
-        this.sendMessage.isDatePoint=true
-      }
-      else {
-        this.sendMessage.isDatePoint=false
+      if ((Date.parse(new Date()) - this.preGetDate) > 1000 * 60 * 5) {
+        this.sendMessage.isDatePoint = true
+      } else {
+        this.sendMessage.isDatePoint = false
       }
       this.preGetDate = (Date.parse(new Date()))
       if (this.currentChatId == "000000") {
@@ -158,8 +157,8 @@ export default {
       }
       //TODO 获取聊天消息缓存
       user.getCache(this.id, this.currentChatId).then(res => {
-        let list=[];
-        res.data.data.list.forEach(item=>{
+        let list = [];
+        res.data.data.list.forEach(item => {
           list.push(JSON.parse(item))
         })
         this.chatList[this.currentChatIndex].list = list
@@ -191,21 +190,22 @@ export default {
           }
         }
         res.onlineUserItems.unshift(this.openGroup)
-        console.log(this.chatList)
         this.onlineUserItems = res.onlineUserItems
       } else {
         user.userInfoById(res.fromUserId).then(uInfo => {
           //插入用户数据
           res.userInfo = uInfo.data.data.info
           //日期显示处理
-          this.preGetDate = Date.parse(res.date)
+          this.preGetDate = Date.parse(new Date())
           //指定用户聊天列表插入数据
-
           if (res.isOpen) {
             this.chatList[0].list.push(res)
+            this.selectChatId("000000")
           } else {
             if (res.fromUserId == this.id) {
               this.chatList[this.currentChatIndex].list.push(res)
+            }else {
+              this.selectChatId(res.fromUserId)
             }
             for (let i = 0; i < this.chatList.length; i++) {
               if (this.chatList[i].id == res.fromUserId) {

@@ -44,7 +44,7 @@ export default {
       user.login(this.userInfo).then(res => {
         if (res.data.success) {
           this.$message.success({type: "success", message: '登陆成功'})
-          cookie.set('token', res.data.data.token, {domain: '8.130.114.187', expires: 7});
+          cookie.set('token', res.data.data.token, {domain: 'localhost', expires: 7});
           this.$router.push('/chat')
         }
       })
