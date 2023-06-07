@@ -1,3 +1,17 @@
+@keyframes back-effect {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50%{
+    transform: translateY(-100px);
+
+  }
+  100% {
+    transform:  translateY(0px);
+  }
+}
+
 .app {
   text-align: center;
   padding-top: 10%;
@@ -16,7 +30,26 @@
   border: 2px solid #cedada;
   border-radius: 6px;
   box-sizing: border-box;
-  background-color: #f2f6f6;
+  background-color: rgba(234, 248, 250, 0.5);
+  box-shadow: #b3cdd2 0px 0px 15px -8px;
+}
+
+.back-png {
+  position: absolute;
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  right: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.back-png > img {
+  width: auto;
+  max-height: 120%;
+  filter: blur(0px) brightness(120%) opacity(20%);
+  animation: back-effect 20s linear infinite;
 }
 
 .now-chat-name {
@@ -40,7 +73,7 @@
 .user-list-tag {
   position: absolute;
   left: 2%;
-  top: 13%;
+  top: 12%;
 }
 
 .user-list-container {
@@ -56,6 +89,7 @@
   border-radius: 5px 7px 5px 9px;
   box-sizing: border-box;
   background-color: #fafafa;
+
 }
 
 
@@ -185,3 +219,4 @@
   bottom: -15%;
   right: 0;
 }
+

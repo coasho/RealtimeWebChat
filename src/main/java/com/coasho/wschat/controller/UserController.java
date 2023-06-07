@@ -10,11 +10,14 @@ import com.coasho.wschat.utils.LoginException;
 import com.coasho.wschat.utils.SignupException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
 
 @CrossOrigin
 @RestController
@@ -22,6 +25,8 @@ import javax.servlet.http.HttpServletRequest;
 public class UserController {
     @Autowired
     private UserService userService;
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
 
     @PostMapping("/login")
     public R Login(@RequestBody User user) {
@@ -58,6 +63,7 @@ public class UserController {
         }
     }
 
+
     @GetMapping("/info")
     public R getInfo(HttpServletRequest request) {
         String id = JwtUtils.getMemberIdByJwtToken(request);
@@ -79,6 +85,20 @@ public class UserController {
         UserVo userVo = new UserVo();
         BeanUtils.copyProperties(user, userVo);
         return R.OK().data("info", userVo);
+    }
+
+    @GetMapping("/getCache/{fromId}/{toId}")
+    public R getCache(@PathVariable("fromId") String fromId, @PathVariable("toId") String toId) {
+        List<String> list=new ArrayList<>();
+        if("000000".equals(toId)){
+            list = redisTemplate.opsForList().range("openChatList", 0, -1);
+        }else {
+            Object chatListId = redisTemplate.opsForHash().get(fromId, toId);
+            if(chatListId!=null){
+                list = redisTemplate.opsForList().range(chatListId.toString(), 0, -1);
+            }
+        }
+        return R.OK().data("list", list);
     }
 
     @PostMapping("/upload/avatar")

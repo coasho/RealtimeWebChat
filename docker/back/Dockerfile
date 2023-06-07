@@ -11,5 +11,5 @@ RUN mkdir -p /home/wschat
 WORKDIR /home/wschat
 # 复制jar文件到路径
 COPY ./ws-chat-1.0-SNAPSHOT.jar /home/wschat/ws-chat-1.0-SNAPSHOT.jar
-# 启动文章服务
+# 启动服务
 ENTRYPOINT ["nohup","java","-Xmx50m","-Xms50m","-jar","ws-chat-1.0-SNAPSHOT.jar"]

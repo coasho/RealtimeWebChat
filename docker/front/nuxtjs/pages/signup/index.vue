@@ -33,7 +33,7 @@
 </template>
 
 <script>
-import login from "~/api/login";
+import user from "~/api/user";
 
 export default {
   data() {
@@ -54,7 +54,7 @@ export default {
   methods: {
     submitForm() {
       if (this.userInfo.password == this.password) {
-        login.signup(this.userInfo).then(res => {
+        user.signup(this.userInfo).then(res => {
           if (res.data.success) {
             this.$message.success({type: "success", message: '注册成功'})
             this.$router.push('/')

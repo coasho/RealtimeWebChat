@@ -2,7 +2,7 @@
   <div class="app">
     <div class="chat-container">
       <el-tag v-if="isOnline" class="online" type="success">在线人数：{{ onlineCount }}</el-tag>
-      <el-tag size="mini" class="user-list-tag">好友列表</el-tag>
+      <el-tag size="mini" class="user-list-tag">在线好友列表</el-tag>
 
 
       <div class="user-list-container">
@@ -24,7 +24,7 @@
           <div class="chat-row" v-for="(chatItem,index) in chatList[currentChatIndex].list" :key="index">
             <el-avatar :class="{'avatar-self':id==chatItem.fromUserId,'avatar-other':id!=chatItem.fromUserId}"
                        shape="square" :size="'large'" :src="chatItem.userInfo.avatar"/>
-            <span v-if="chatItem.date" class="chat-row-date">{{ chatItem.date }}</span>
+            <span v-if="chatItem.isDatePoint" class="chat-row-date">{{ chatItem.date }}</span>
             <span v-if="currentChatId=='000000'"
                   :class="{'name-self':id==chatItem.fromUserId,'name-other':id!=chatItem.fromUserId}">
               {{ chatItem.userInfo.name }}
@@ -45,6 +45,7 @@
           <el-button :disabled="sendMessage.content==null" @click="sendMsg">发送</el-button>
         </el-form-item>
       </el-form>
+      <div class="back-png" ><img src="../../static/background.png"></div>
     </div>
   </div>
 </template>
@@ -52,7 +53,7 @@
 <script>
 import cookie from "js-cookie";
 import wscon from "~/api/wscon";
-import login from "~/api/login";
+import user from "~/api/user";
 import "@/assets/chat.css"
 
 export default {
@@ -63,7 +64,8 @@ export default {
       sendMessage: {
         token: '',
         toUserId: null,
-        content: null
+        content: null,
+        isDatePoint:false
       },
       onlineUserItems: [],
       chatList: [
@@ -78,7 +80,7 @@ export default {
         id: "000000",
         name: "开放群聊"
       },
-      currentChatId: '000000',
+      currentChatId: '',
       currentChatIndex: 0,
       currentChatInfo: {
         name: "开放群聊"
@@ -87,7 +89,6 @@ export default {
     }
   },
   created() {
-
   },
   mounted() {
     this.wsInit()
@@ -102,6 +103,13 @@ export default {
   methods: {
     sendMsg() {
       this.sendMessage.token = cookie.get('token')
+      if ((Date.parse(new Date()) - this.preGetDate) > 1000 * 60 * 3) {
+        this.sendMessage.isDatePoint=true
+      }
+      else {
+        this.sendMessage.isDatePoint=false
+      }
+      this.preGetDate = (Date.parse(new Date()))
       if (this.currentChatId == "000000") {
         this.sendMessage.toUserId = null
       } else {
@@ -111,7 +119,7 @@ export default {
       this.sendMessage.content = null
     },
     wsInit() {
-      login.userInfo().then(res => {
+      user.userInfo().then(res => {
         if (res == undefined) {
           this.$router.push('/')
         } else {
@@ -121,6 +129,7 @@ export default {
           this.websocket.onmessage = this.wsOnMessage
           this.websocket.onclose = this.wsOnClose
           this.websocket.onerror = this.wsOnError
+          this.selectChatId('000000')
         }
       })
     },
@@ -148,6 +157,13 @@ export default {
         }
       }
       //TODO 获取聊天消息缓存
+      user.getCache(this.id, this.currentChatId).then(res => {
+        let list=[];
+        res.data.data.list.forEach(item=>{
+          list.push(JSON.parse(item))
+        })
+        this.chatList[this.currentChatIndex].list = list
+      })
     },
     wsOnMessage(event) {
       let res = JSON.parse(event.data)
@@ -178,17 +194,11 @@ export default {
         console.log(this.chatList)
         this.onlineUserItems = res.onlineUserItems
       } else {
-        login.userInfoById(res.fromUserId).then(uInfo => {
+        user.userInfoById(res.fromUserId).then(uInfo => {
           //插入用户数据
           res.userInfo = uInfo.data.data.info
-          console.log((Date.parse(res.date) - this.preGetDate) * 0.001 / 60 / 3)
           //日期显示处理
-          if ((Date.parse(res.date) - this.preGetDate) < 1000 * 60 * 3) {
-            this.preGetDate = Date.parse(res.date)
-            res.date = null
-          } else {
-            this.preGetDate = Date.parse(res.date)
-          }
+          this.preGetDate = Date.parse(res.date)
           //指定用户聊天列表插入数据
 
           if (res.isOpen) {

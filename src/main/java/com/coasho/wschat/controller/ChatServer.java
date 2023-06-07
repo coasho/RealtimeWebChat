@@ -1,6 +1,7 @@
 package com.coasho.wschat.controller;
 
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.coasho.wschat.entity.User;
@@ -10,6 +11,7 @@ import com.coasho.wschat.utils.JwtUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -31,9 +33,16 @@ public class ChatServer {
     private Session session;
     private static UserService userService;
 
+    private static RedisTemplate<String, String> redisTemplate;
+
     @Autowired
     public void setUserService(UserService userService) {
         ChatServer.userService = userService;
+    }
+
+    @Autowired
+    public void RedisTemplate(RedisTemplate<String, String> redisTemplate) {
+        ChatServer.redisTemplate = redisTemplate;
     }
 
     @OnOpen
@@ -47,7 +56,7 @@ public class ChatServer {
             addNumber();
         }
 
-        sendInfo("用户上线", null, true);
+        sendInfo("用户上线", null, true, true);
     }
 
     @OnMessage
@@ -57,15 +66,16 @@ public class ChatServer {
             JSONObject jsonObject = JSONObject.parseObject(message);
             jsonObject.put("fromUserId", userId);
             String token = jsonObject.getString("token");
-            String fromUserId = JwtUtils.getMemberIdByJwtTokenString(token);
             String toUserId = jsonObject.getString("toUserId");
             String content = jsonObject.getString("content");
+            boolean isDatePoint = jsonObject.getBoolean("isDatePoint");
+            String fromUserId = JwtUtils.getMemberIdByJwtTokenString(token);
             if ((!StringUtils.isEmpty(fromUserId)) && getChatMap().containsKey(fromUserId)) {
                 ChatServer server = getChatMap().get(fromUserId);
                 //发送消息业务
-                server.sendInfo(content, toUserId, false);
+                server.sendInfo(content, toUserId, isDatePoint, false);
             } else {
-                sendMessage("token-fail", userId,true, false);
+                sendMessage("token-fail", userId, isDatePoint, true, false);
             }
 
         }
@@ -74,7 +84,7 @@ public class ChatServer {
     @OnClose
     public void onClose() {
         removeNumber();
-        sendInfo("用户下线", null, true);
+        sendInfo("用户下线", null, true, true);
     }
 
     @OnError
@@ -83,18 +93,18 @@ public class ChatServer {
         error.printStackTrace();
     }
 
-    private void sendInfo(String message, String toUserId, Boolean isSystem) {
+    private void sendInfo(String message, String toUserId, boolean isDatePoint, Boolean isSystem) {
         if (StringUtils.isEmpty(toUserId)) {
             Iterator<String> iterator = getChatMap().keySet().iterator();
             while (iterator.hasNext()) {
                 String userId = iterator.next();
                 ChatServer server = getChatMap().get(userId);
-                server.sendMessage(message, this.userId,true, isSystem);
+                server.sendMessage(message, this.userId, isDatePoint, true, isSystem);
             }
         } else {
             ChatServer server = getChatMap().get(toUserId);
-            server.sendMessage(message, userId, false,false);
-            sendMessage(message, userId,false, false);
+            server.sendMessage(message, userId, isDatePoint, false, false);
+            sendMessage(message, userId, isDatePoint, false, false);
         }
     }
 
@@ -117,17 +127,22 @@ public class ChatServer {
         return userVos;
     }
 
-    private void sendMessage(String content, String fromUserId,Boolean isOpen, Boolean isSystem) {
+    private void sendMessage(String content, String fromUserId, boolean isDatePoint, Boolean isOpen, Boolean isSystem) {
         HashMap<String, Object> map = new HashMap<>();
         map.put("fromUserId", fromUserId);
         map.put("content", content);
         map.put("isSystem", isSystem);
-        map.put("isOpen",isOpen);
+        map.put("isOpen", isOpen);
         map.put("date", DateUtil.now());
+        map.put("isDatePoint", isDatePoint);
         if (isSystem) {
             map.put("onlineCount", getOnlineCount());
             List<UserVo> onlineUsers = getOnlineUsers();
             map.put("onlineUserItems", onlineUsers);
+        } else {
+            UserVo userVo = new UserVo();
+            BeanUtils.copyProperties(userService.getById(userId), userVo);
+            map.put("userInfo", userVo);
         }
         String systemMessage = JSONObject.toJSONString(map);
         synchronized (session) {
@@ -135,6 +150,24 @@ public class ChatServer {
                 session.getBasicRemote().sendText(systemMessage);
             } catch (IOException e) {
                 log.info("服务器推送失败:" + e.getMessage());
+            }
+        }
+        if (!isSystem) {
+            if (!isOpen && userId != fromUserId) {
+                redisTemplate.opsForHash().putIfAbsent(userId, fromUserId, IdUtil.fastSimpleUUID());
+                Object chatListId = redisTemplate.opsForHash().get(userId, fromUserId);
+                redisTemplate.opsForHash().putIfAbsent(fromUserId, userId, chatListId);
+                Long size = redisTemplate.opsForList().size(chatListId.toString());
+                if (size > 100) {
+                    redisTemplate.opsForList().leftPop(chatListId.toString());
+                }
+                redisTemplate.opsForList().rightPush(chatListId.toString(), systemMessage);
+            } else if (isOpen && userId == fromUserId) {
+                Long size = redisTemplate.opsForList().size("openChatList");
+                if (size > 100) {
+                    redisTemplate.opsForList().leftPop("openChatList");
+                }
+                redisTemplate.opsForList().rightPush("openChatList", systemMessage);
             }
         }
     }

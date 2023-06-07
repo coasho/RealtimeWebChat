@@ -18,7 +18,7 @@
 </template>
 
 <script>
-import login from "~/api/login";
+import user from "~/api/user";
 import cookie from "js-cookie"
 
 export default {
@@ -33,7 +33,7 @@ export default {
     }
   },
   created() {
-    login.userInfo().then(res => {
+    user.userInfo().then(res => {
       if (res != undefined) {
         this.$router.push('/chat')
       }
@@ -41,7 +41,7 @@ export default {
   },
   methods: {
     submitForm() {
-      login.login(this.userInfo).then(res => {
+      user.login(this.userInfo).then(res => {
         if (res.data.success) {
           this.$message.success({type: "success", message: '登陆成功'})
           cookie.set('token', res.data.data.token, {domain: '8.130.114.187', expires: 7});
